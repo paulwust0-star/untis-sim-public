@@ -1,0 +1,115 @@
+<!DOCTYPE html><html lang='de'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'><title>ABMELDEN SIM</title><style>
+html,body{margin:0;height:100%;overflow:hidden;background:#111;touch-action:none;font-family:system-ui,sans-serif;color:#fff;user-select:none;-webkit-user-select:none}
+canvas{display:block}
+#lvl{position:fixed;top:10px;left:12px;font-size:15px;pointer-events:none;text-shadow:0 0 4px #000}
+#bar{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:55%;max-width:320px;pointer-events:none;text-align:center;font-size:13px;text-shadow:0 0 4px #000}
+#bar>div{height:12px;background:#0008;border-radius:8px;overflow:hidden;margin-top:3px;border:1px solid #fff4}
+#fill{height:100%;width:0;background:#4ade80}
+#toast{position:fixed;top:22%;width:100%;text-align:center;font-size:22px;font-weight:700;pointer-events:none;opacity:0;transition:opacity .3s;text-shadow:0 0 8px #000;padding:0 10px;box-sizing:border-box;z-index:20}
+#tbtn{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);padding:16px 26px;font-size:20px;border-radius:16px;border:3px solid #fff;background:#2563ebcc;color:#fff;animation:pl 1s infinite alternate}
+@keyframes pl{to{transform:translateX(-50%) scale(1.08)}}
+#joy{position:fixed;width:90px;height:90px;border-radius:50%;border:3px solid #fff6;background:#fff2;pointer-events:none;display:none;margin:-45px 0 0 -45px}
+#knob{position:absolute;left:30px;top:30px;width:30px;height:30px;border-radius:50%;background:#fffc}
+.ov{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,10,.85);text-align:center;padding:18px;z-index:15}
+.ov h1{margin:0 0 8px;font-size:34px;letter-spacing:2px;color:#60a5fa}
+.ov p{max-width:420px;line-height:1.4}
+.hide{display:none!important}
+button{margin:6px;padding:13px 24px;font-size:18px;border:2px solid #60a5fa;background:#60a5fa33;color:#fff;border-radius:12px}
+#tab{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;z-index:10}
+#tw{position:relative;height:90vh}
+#tw img{height:100%;display:block;border-radius:14px}
+#hint{position:absolute;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:4px solid #facc15;animation:pu .7s infinite alternate;pointer-events:none}
+@keyframes pu{to{transform:scale(1.35);opacity:.4}}
+</style></head><body>
+<div id='lvl'>Level 1</div><div id='bar'>Verdacht<div><div id='fill'></div></div></div><div id='toast'></div>
+<button id='tbtn' class='hide'>📱 Tablet</button><div id='joy'><div id='knob'></div></div>
+<div id='tab'><div id='tw'><img id='timg' alt=''><div id='hint'></div></div></div>
+<div class='ov' id='title'><h1>ABMELDEN SIM</h1><p>Dein Platz: letzte Reihe, rechter Doppeltisch, links. 1) Tablet antippen und dich in der Stundenplan-App abmelden. 2) Der Lehrer bekommt eine Benachrichtigung. 3) Schleich zur Tür vorne links, während er zur Tafel schaut. Nicht rennen, wenn er sich wegdreht, er hört dich!</p><p style='font-size:12px;opacity:.7'>Reiner Spaß und Parodie, kein echtes Untis.</p><button id='start'>START</button></div>
+<div class='ov hide' id='over'><h1>Erwischt! 😠</h1><p>Wo willst du hin?</p><button id='again'>Nochmal</button></div>
+<div class='ov hide' id='win'><h1>Geschafft! 🚪</h1><p id='wt'></p><button id='next'>Nächstes Level</button></div>
+<script type='module'>
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+const $=id=>document.getElementById(id),R=(a,b)=>a+Math.random()*(b-a),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const UNTIS=['1000283676.jpg','1000283677.jpg','1000283678.jpg','1000283679.jpg'],HINTS=[[.12,.9],[.4,.75],[.5,.45],[.89,.08]];
+const ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);document.body.appendChild(ren.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x1b2030);
+const cam=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,100);
+scene.add(new THREE.AmbientLight(0xffffff,.8));const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(4,12,6);scene.add(dl);
+const L=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,flatShading:true,roughness:.9},o||{}));
+const box=(w,h,d,c,x,y,z,p,o)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),L(c,o));m.position.set(x,y,z);(p||scene).add(m);return m};
+box(14,.2,18,0xb9a98a,0,-.1,0);box(.3,3.4,18,0xe8e4d8,-7.15,1.7,0);box(.3,3.4,18,0xe8e4d8,7.15,1.7,0);box(14.6,3.4,.3,0xe8e4d8,0,1.7,-9.15);
+for(const z of [-5,-1,3,7])box(.35,1.4,2.2,0x9fd3ff,7.0,1.9,z,null,{emissive:0x6fb4ff,emissiveIntensity:.6});
+box(5,2.2,.12,0x15171c,0,1.7,-8.95);box(4.8,2,.05,0x2a4a7a,0,1.7,-8.86,null,{emissive:0x1d3b6e,emissiveIntensity:.8});
+box(.2,2.4,1.4,0x7a4b2a,-6.95,1.2,-4.5);box(.15,.1,.1,0xdddddd,-6.82,1.1,-4.0);box(.2,.35,1.0,0x22c55e,-6.9,2.75,-4.5,null,{emissive:0x22c55e,emissiveIntensity:1});
+const OB=[];
+function desk(dx,rz){box(2.4,.08,.9,0xc9a46a,dx,.75,rz);for(const sx of [-1,1])for(const sz of [-1,1])box(.06,.72,.06,0x555b66,dx+sx*1.1,.36,rz+sz*.38);OB.push({x1:dx-1.2,x2:dx+1.2,z1:rz-.45,z2:rz+.45})}
+function chair(x,z){box(.5,.06,.5,0x3b4a63,x,.45,z);box(.5,.5,.06,0x3b4a63,x,.75,z+.26);for(const sx of [-1,1])for(const sz of [-1,1])box(.05,.42,.05,0x555b66,x+sx*.2,.21,z+sz*.2)}
+const HAIR=[0x2b1d12,0x6b4a2b,0xd6b25e,0x111111,0x8a3b1e],SK=[0xe2b48f,0xc68c64,0xf0c8a8,0x8d5a3b],SH=[0x2563eb,0x16a34a,0xeab308,0xf97316,0x9333ea,0xe5e7eb,0xdb2777],pick=a=>a[Math.floor(Math.random()*a.length)];
+function student(x,z){const g=new THREE.Group();g.position.set(x,0,z);box(.4,.15,.5,0x23283a,0,.55,-.22,g);box(.46,.55,.3,pick(SH),0,.88,0,g);box(.3,.3,.3,pick(SK),0,1.3,0,g);box(.32,.12,.32,pick(HAIR),0,1.48,.02,g);scene.add(g);OB.push({x1:x-.3,x2:x+.3,z1:z-.3,z2:z+.3})}
+for(const rz of [-1,2.6,6.2])for(const dx of [-3.5,3.5]){desk(dx,rz);for(const sx of [-.6,.6]){const x=dx+sx,z=rz+.85;chair(x,z);const isP=rz==6.2&&dx==3.5&&sx==-.6;if(!isP&&Math.random()<.6)student(x,z)}}
+box(2,.08,.9,0x8a6a45,2.8,.8,-5.6);for(const sx of [-1,1])for(const sz of [-1,1])box(.06,.76,.06,0x555b66,2.8+sx*.9,.38,-5.6+sz*.38);box(.5,.03,.35,0x333333,2.6,.86,-5.6);box(.5,.32,.03,0x93c5fd,2.6,1.02,-5.78,null,{emissive:0x4a90e2,emissiveIntensity:.7});OB.push({x1:1.8,x2:3.8,z1:-6.05,z2:-5.15});
+const T=new THREE.Group();T.position.set(0,0,-7.3);scene.add(T);
+const SKIN=0xe3b99a,SHB=0x2f5fa8;
+for(const s of [-1,1]){box(.28,.9,.3,0x2b2f3a,s*.17,.45,0,T);box(.2,.75,.22,SHB,s*.47,1.25,0,T);box(.14,.14,.16,SKIN,s*.47,.8,0,T)}
+box(.78,.85,.45,SHB,0,1.32,0,T);box(.18,.1,.18,SKIN,0,1.82,0,T);
+const head=new THREE.Group();head.position.set(0,1.97,0);T.add(head);
+box(.4,.42,.4,SKIN,0,0,0,head);box(.42,.08,.42,0xb7a88a,0,.24,-.01,head);box(.04,.2,.4,0xb7a88a,-.2,.1,-.01,head);box(.04,.2,.4,0xb7a88a,.2,.1,-.01,head);box(.4,.2,.04,0xb7a88a,0,.1,-.2,head);
+for(const s of [-1,1]){box(.06,.12,.05,SKIN,s*.22,-.02,0,head);const ring=new THREE.Mesh(new THREE.TorusGeometry(.075,.014,4,8),L(0x2a1f1a));ring.position.set(s*.1,.03,.21);head.add(ring);box(.035,.03,.02,0x111111,s*.1,.03,.2,head)}
+box(.08,.015,.015,0x2a1f1a,0,.05,.21,head);box(.14,.025,.02,0x7a3b3b,0,-.12,.2,head);
+function coneGeo(h,r){const v=[0,.03,0],n=14;for(let i=0;i<=n;i++){const a=-h+2*h*i/n;v.push(Math.sin(a)*r,.03,Math.cos(a)*r)}const idx=[];for(let i=1;i<=n;i++)idx.push(0,i+1,i);const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setIndex(idx);return g}
+function bubble(txt){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.fillStyle='#fff';x.beginPath();(x.roundRect||x.rect).call(x,4,4,504,120,28);x.fill();x.fillStyle='#111';x.font='bold 44px system-ui';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,256,66);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.scale.set(3.6,.9,1);s.position.set(0,3.2,0);s.visible=false;s.renderOrder=5;T.add(s);return s}
+const bubA=bubble('📲 Neue Abmeldung!'),bubB=bubble('Wo willst du hin? 😠');
+const P=new THREE.Group();scene.add(P);const legs=new THREE.Group();P.add(legs);for(const s of [-1,1])box(.24,.7,.26,0x23283a,s*.13,.35,0,legs);
+const upr=new THREE.Group();P.add(upr);box(.52,.62,.3,0xb91c1c,0,1.02,0,upr);box(.3,.3,.3,0xe2b48f,0,1.5,0,upr);box(.32,.12,.32,0x4b3320,0,1.68,0,upr);for(const s of [-1,1])box(.14,.55,.16,0xb91c1c,s*.34,1.0,0,upr);
+const seated=v=>{legs.visible=!v;upr.position.y=v?-.38:0};
+const G={ph:'title',lvl:1,sus:0,face:Math.PI,ts:'board',tt:3,px:2.9,pz:7.05,time:0,ix:0,iz:0,nt:0};
+let HALF=.62,RNG=13,coneM=null;
+function setCone(){if(coneM){T.remove(coneM);coneM.geometry.dispose()}coneM=new THREE.Mesh(coneGeo(HALF,RNG),new THREE.MeshBasicMaterial({color:0xffe14d,transparent:true,opacity:.25,side:THREE.DoubleSide,depthWrite:false}));T.add(coneM)}
+function setT(s){G.ts=s;const l=G.lvl;if(s=='board')G.tt=Math.max(1.6,R(3,5)-l*.25);else if(s=='watch')G.tt=R(2.2,3.6)+l*.25;else G.tt=2.6}
+function resetLevel(){HALF=Math.min(.82,.62+.03*(G.lvl-1));setCone();G.px=2.9;G.pz=7.05;G.sus=0;G.face=Math.PI;G.time=0;P.position.set(G.px,0,G.pz);P.rotation.y=Math.PI;seated(true);setT('board');G.tt=2;bubA.visible=false;bubB.visible=false;$('lvl').textContent='Level '+G.lvl}
+let tto;function toast(t,ms){const e=$('toast');e.textContent=t;e.style.opacity=1;clearTimeout(tto);tto=setTimeout(()=>e.style.opacity=0,ms||1600)}
+let ac;function tone(f,d,ty,v){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type=ty||'sine';o.frequency.value=f;g.gain.value=v||.08;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+let step=0;function showStep(){$('timg').src=UNTIS[step];const h=HINTS[step];$('hint').style.left=h[0]*100+'%';$('hint').style.top=h[1]*100+'%'}
+$('tbtn').onclick=()=>{step=0;showStep();$('tab').style.display='flex';tone(600,.1)};
+$('tw').onclick=e=>{const r=$('timg').getBoundingClientRect(),rx=(e.clientX-r.left)/r.width,ry=(e.clientY-r.top)/r.height;if(step<3){step++;showStep();tone(500+step*100,.08)}else if(rx>.7&&ry<.17)report();else toast('Tipp auf den Haken ✔ oben rechts')};
+function report(){$('tab').style.display='none';$('tbtn').classList.add('hide');G.ph='sneak';seated(false);setT('phone');bubA.visible=true;tone(880,.25,'sine',.12);setTimeout(()=>tone(1320,.3,'sine',.1),180);toast('✔ Abwesenheit gemeldet – jetzt raus hier! 🏃',2400)}
+$('start').onclick=()=>{$('title').classList.add('hide');G.ph='seat';resetLevel();$('tbtn').classList.remove('hide');toast('Tippe auf dein Tablet 📱',2500);tone(500,.1)};
+function begin(){$('over').classList.add('hide');$('win').classList.add('hide');resetLevel();seated(false);G.ph='sneak';setT('board');G.tt=2}
+$('again').onclick=begin;$('next').onclick=()=>{G.lvl++;begin()};
+const keys={};addEventListener('keydown',e=>keys[e.code]=1);addEventListener('keyup',e=>keys[e.code]=0);
+let jid=null,ox=0,oy=0;const cv=ren.domElement;
+cv.addEventListener('pointerdown',e=>{if(G.ph!='sneak'||jid!==null)return;jid=e.pointerId;ox=e.clientX;oy=e.clientY;const j=$('joy');j.style.display='block';j.style.left=ox+'px';j.style.top=oy+'px'});
+cv.addEventListener('pointermove',e=>{if(e.pointerId!==jid)return;let dx=e.clientX-ox,dy=e.clientY-oy;const l=Math.hypot(dx,dy),m=Math.min(l,45);if(l>0){dx=dx/l*m;dy=dy/l*m}G.ix=dx/45;G.iz=dy/45;$('knob').style.transform='translate('+dx*.6+'px,'+dy*.6+'px)'});
+const jup=e=>{if(e.pointerId!==jid)return;jid=null;G.ix=0;G.iz=0;$('joy').style.display='none';$('knob').style.transform='none'};cv.addEventListener('pointerup',jup);cv.addEventListener('pointercancel',jup);
+function angd(a,b){let d=b-a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return d}
+function blocked(x,z){if(x<-6.7||x>6.7||z<-8.5||z>8.6)return true;if(Math.hypot(x,z+7.3)<.75)return true;for(const o of OB)if(x>o.x1-.28&&x<o.x2+.28&&z>o.z1-.28&&z<o.z2+.28)return true;return false}
+function caught(){G.ph='caught';bubA.visible=false;bubB.visible=true;tone(150,.5,'sawtooth',.1);setTimeout(()=>$('over').classList.remove('hide'),1100)}
+function update(dt){
+ G.tt-=dt;G.nt-=dt;
+ if(G.tt<=0){if(G.ts=='board')setT('watch');else if(G.ts=='watch')setT('board');else{bubA.visible=false;setT('watch')}}
+ const target=G.ts=='board'?Math.PI:0,sp=(5+G.lvl*.5)*dt,dd=angd(G.face,target);G.face+=Math.abs(dd)<sp?dd:Math.sign(dd)*sp;T.rotation.y=G.face;head.rotation.x=G.ts=='phone'?.5:0;
+ const facing=G.ts=='watch'&&Math.abs(angd(G.face,0))<.3;coneM.visible=facing&&G.ph=='sneak';
+ if(G.ph!='sneak')return;
+ G.time+=dt;
+ let ix=G.ix+((keys.ArrowRight||keys.KeyD)?1:0)-((keys.ArrowLeft||keys.KeyA)?1:0),iz=G.iz+((keys.ArrowDown||keys.KeyS)?1:0)-((keys.ArrowUp||keys.KeyW)?1:0);
+ const l=Math.hypot(ix,iz),mag=Math.min(1,l);
+ if(mag>.05){const v=3.4*mag*dt,nx=G.px+ix/l*v,nz=G.pz+iz/l*v;if(!blocked(nx,G.pz))G.px=nx;if(!blocked(G.px,nz))G.pz=nz;P.rotation.y+=angd(P.rotation.y,Math.atan2(ix,iz))*Math.min(1,dt*12);P.position.y=Math.abs(Math.sin(G.time*10*mag))*.06}else P.position.y=0;
+ P.position.x=G.px;P.position.z=G.pz;
+ const dx=G.px-T.position.x,dz=G.pz-T.position.z,d=Math.hypot(dx,dz)||1,dot=(dx*Math.sin(G.face)+dz*Math.cos(G.face))/d;
+ const seen=facing&&d<RNG&&dot>Math.cos(HALF);
+ let rate=-14;
+ if(seen){rate=40*(1.3-.6*d/RNG)+8*G.lvl;if(G.nt<=0&&G.sus>40){tone(300+G.sus*4,.06,'square',.03);G.nt=.25}}
+ else if(G.ts=='board'&&mag>.75){rate=10;if(G.nt<=0){toast('Psst, zu laut! 🏃',900);tone(120,.15,'square',.05);G.nt=1.5}}
+ G.sus=cl(G.sus+rate*dt,0,100);
+ $('fill').style.width=G.sus+'%';$('fill').style.background='hsl('+(120-G.sus*1.2)+',80%,50%)';
+ if(G.sus>=100){caught();return}
+ if(G.px<-6.0&&G.pz>-6.3&&G.pz<-2.7){G.ph='win';tone(660,.15);setTimeout(()=>tone(880,.15),150);setTimeout(()=>tone(1320,.3),300);$('wt').textContent='Raus in '+G.time.toFixed(1)+' s – Level '+G.lvl+' geschafft! 🎉';$('win').classList.remove('hide')}
+}
+const camT=new THREE.Vector3(),look=new THREE.Vector3(0,0,-1.5),lk=new THREE.Vector3();
+function camUpdate(k){const cz=cl(G.pz+8.5,-1,15.5);camT.set(G.px*.35,11,cz);cam.position.lerp(camT,k);lk.set(G.px*.3,0,Math.max(-8,cz-16.5));look.lerp(lk,k);cam.lookAt(look)}
+addEventListener('resize',()=>{ren.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()});
+resetLevel();camUpdate(1);
+let last=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,.05);last=now;if(G.ph=='sneak'||G.ph=='seat')update(dt);camUpdate(.1);ren.render(scene,cam)}
+requestAnimationFrame(loop);
+</script></body></html>
